@@ -25,13 +25,12 @@ class ExtractorOfSalesforce:
         if initial_load:
             maxdate = '1999-01-01T00:00:00.000+0000'  
         else:
-            sql_query = f'SELECT MAX("SystemModstamp") AS maxdate FROM {table_name}'
+            sql_query = f'SELECT MAX("SystemModstamp") AS maxdate FROM public.{table_name}'
             df = pd.read_sql(sql_query, engine)
             maxdate = df["maxdate"][0]
             
         query = self._schemas.get_query(table_name, maxdate)
         response = self._connection.query_to_raw_data(query)
-
         if response.json()['records'] == [] or response.json()['records'] == None :
             return print(f'NO update data available for table {table_name}')
 
@@ -42,11 +41,12 @@ class ExtractorOfSalesforce:
         if initial_load:
             df.to_sql(name= f'{table_name}', con=engine, if_exists='replace')
         else:
-            sql_query = f'SELECT "Id" FROM {table_name}'
+            sql_query = f'SELECT "Id" FROM public.{table_name}'
             dfdatabase = pd.read_sql(sql_query, engine)
             columns_list = self._schemas.get_column_list(table_name)  # Replace these with your actual column names
             dfupdates = pd.DataFrame(columns=columns_list)
             dfinsert = pd.DataFrame(columns=columns_list)
+            
 
             for index, row in df.iterrows():
                 # Create dataframe of rows to updates
@@ -74,9 +74,10 @@ class ExtractorOfSalesforce:
 
 initial_load = False
 es = ExtractorOfSalesforce()
-es.sync_salesforce_data("account", initial_load)
-es.sync_salesforce_data("opportunity", initial_load)
-es.sync_salesforce_data("lead",initial_load)
+# es.sync_salesforce_data("old_account", initial_load)
+es.sync_salesforce_data("old_opportunity", initial_load)
+# es.sync_salesforce_data("lead",initial_load)
+# es.sync_salesforce_data("user",initial_load)
 print('Salesforce Extract Succeeded')
 
 
